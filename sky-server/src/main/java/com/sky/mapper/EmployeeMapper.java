@@ -33,4 +33,18 @@ public interface EmployeeMapper {
      * @return
      */
     Page<Employee> pageQuery(EmployeePageQueryDTO employeePageQueryDTO);
+
+    /**
+     * update
+     * @param employee
+     */
+    void update(Employee employee);
+
+    /**
+     * select by id
+     * @param id
+     * @return
+     */
+    @Select("select * from employee where id = #{id}")
+    Employee selectById(Integer id);
 }

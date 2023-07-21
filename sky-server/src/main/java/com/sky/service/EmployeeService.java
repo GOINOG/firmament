@@ -27,4 +27,24 @@ public interface EmployeeService {
      * @return
      */
     PageResult pageQuery(EmployeePageQueryDTO employeePageQueryDTO);
+
+    /**
+     * status change
+     * @param status
+     * @param id
+     */
+    void statusChange(Integer status, Long id);
+
+    /**
+     * select by id
+     * @param id
+     * @return
+     */
+    Employee selectById(Integer id);
+
+    /**
+     * update employee
+     * @param employeeDTO
+     */
+    void update(EmployeeDTO employeeDTO);
 }

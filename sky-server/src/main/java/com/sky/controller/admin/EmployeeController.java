@@ -95,5 +95,40 @@ public class EmployeeController {
         return Result.success(pageResult);
     }
 
+    /**
+     * status change
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public Result statusChange(@PathVariable Integer status, Long id){
+        log.info("启用禁用员工参数：{}：{}", status, id);
+        employeeService.statusChange(status, id);
+        return Result.success();
+    }
 
+    /**
+     * select by id
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public Result<Employee> select(@PathVariable Integer id){
+        log.info("查询员工信息，id = {}", id);
+        Employee employee = employeeService.selectById(id);
+        return Result.success(employee);
+    }
+
+    /**
+     * update employee
+     * @param employeeDTO
+     * @return
+     */
+    @PutMapping
+    public Result updateEmployee(@RequestBody EmployeeDTO employeeDTO){
+        log.info("修改员工id = {}的信息", employeeDTO.getId());
+        employeeService.update(employeeDTO);
+        return Result.success();
+    }
 }
