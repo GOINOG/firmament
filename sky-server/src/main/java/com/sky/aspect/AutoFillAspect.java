@@ -29,7 +29,7 @@ public class AutoFillAspect {
     public void autoFillPointerCut(){}
 
     /**
-     * 前置通知，为公共字段赋值
+     * before advice，为公共字段赋值
      */
     @Before("autoFillPointerCut()")
     public void autoFill(JoinPoint joinPoint){
@@ -46,7 +46,7 @@ public class AutoFillAspect {
             return;
         }
 
-        Object o = args[0];
+        Object o = args[0];//约定第一个arg是需要的实体对象,可以修改
 
         //准备赋值数据
         LocalDateTime now = LocalDateTime.now();
