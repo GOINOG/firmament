@@ -1,5 +1,6 @@
 package com.sky.controller.admin;
 
+import com.sky.constant.MessageConstant;
 import com.sky.result.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +18,7 @@ import java.util.UUID;
 public class CommonController {
 
     @PostMapping("/upload")
-    public Result<String> upload(MultipartFile file) throws IOException {
+    public Result<String> upload(MultipartFile file){
         log.info("文件上传：{}", file);
         //get original file name
         String originalFilename = file.getOriginalFilename();
@@ -31,7 +32,11 @@ public class CommonController {
 
         //store on local disk
         String storePath = "F:\\WebDevelopment\\firmament\\img\\" + newName;
-        file.transferTo(new File(storePath));
+        try {
+            file.transferTo(new File(storePath));
+        } catch (IOException e) {
+            log.error(MessageConstant.UPLOAD_FAILED+"："+e);
+        }
         return Result.success(storePath);
     }
 }
