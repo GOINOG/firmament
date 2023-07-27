@@ -5,6 +5,7 @@ import com.sky.dto.DishPageQueryDTO;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.DishService;
+import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -50,6 +51,35 @@ public class DishController {
     public Result delete(@RequestParam List<Long> ids){
         log.info("dish batch delete: {} ",ids);
         dishService.deleteBatch(ids);
+        return Result.success();
+    }
+
+    /**
+     * select by id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public Result<DishVO> getById(@PathVariable Long id){
+        log.info("get by id: {}", id);
+        DishVO dishVO = dishService.getByIdWithFlavor(id);
+        return Result.success(dishVO);
+    }
+
+    /**
+     * update dishes
+     * @return
+     */
+    @PutMapping
+    public Result update(@RequestBody DishDTO dishDTO){
+        log.info("update dishDTO: {}", dishDTO);
+        dishService.updateWithFlavor(dishDTO);
+        return Result.success();
+    }
+
+    @PostMapping("status/{status}")
+    public Result statusChange(@PathVariable Integer status, Long id){
+        log.info("status changing call, id: {}, status: {}", id, status);
+        dishService.statusChange(status, id);
         return Result.success();
     }
 

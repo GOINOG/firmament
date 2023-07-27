@@ -33,8 +33,10 @@ public class DishServiceImpl implements DishService {
     private DishFlavorsMapper dishFlavorsMapper;
     @Autowired
     private SetmealDishMapper setmealDishMapper;
+
     /**
-     *insert dish and corresponding flavor
+     * insert dish and corresponding flavor
+     *
      * @param dishDTO
      * @return
      */
@@ -51,7 +53,7 @@ public class DishServiceImpl implements DishService {
         Long dishId = dish.getId();
 
         List<DishFlavor> flavors = dishDTO.getFlavors();
-        if (flavors != null && flavors.size() > 0){
+        if (flavors != null && flavors.size() > 0) {
             flavors.forEach(dishFlavor -> {
                 dishFlavor.setDishId(dishId);
             });
@@ -62,6 +64,7 @@ public class DishServiceImpl implements DishService {
 
     /**
      * dish page query
+     *
      * @param dpqDTO
      * @return
      */
@@ -69,11 +72,12 @@ public class DishServiceImpl implements DishService {
     public PageResult pageQuery(DishPageQueryDTO dpqDTO) {
         PageHelper.startPage(dpqDTO.getPage(), dpqDTO.getPageSize());
         Page<DishVO> page = dishMapper.pageQuery(dpqDTO);
-        return new PageResult(page.getTotal(),page.getResult());
+        return new PageResult(page.getTotal(), page.getResult());
     }
 
     /**
      * dish batch delete by ids
+     *
      * @param ids
      */
     @Override
@@ -82,7 +86,7 @@ public class DishServiceImpl implements DishService {
         //判断当前菜品是否能够删除————是否存在起售中的菜品
         for (Long id : ids) {
             Dish dish = dishMapper.getById(id);
-            if (dish.getStatus() == StatusConstant.ENABLE){
+            if (dish.getStatus() == StatusConstant.ENABLE) {
                 //当前菜品起售，不能删除
                 throw new DeletionNotAllowedException(MessageConstant.DISH_ON_SALE);
             }
@@ -90,7 +94,7 @@ public class DishServiceImpl implements DishService {
 
         //判断当前菜品是否能够删除————是否被setMeal关联
         List<Long> setmealIds = setmealDishMapper.getSetmealIdByDishIds(ids);
-        if (setmealIds != null && setmealIds.size() > 0){
+        if (setmealIds != null && setmealIds.size() > 0) {
             throw new DeletionNotAllowedException(MessageConstant.DISH_BE_RELATED_BY_SETMEAL);
         }
 
@@ -100,5 +104,63 @@ public class DishServiceImpl implements DishService {
             //删除dish_flavor的数据
             dishFlavorsMapper.deleteByDishId(id);
         }
+    }
+
+    @Override
+    /**
+     * get dishes By Id With Flavor
+     * @param id
+     * @return
+     */
+    public DishVO getByIdWithFlavor(Long id) {
+        //根据ID查询dish
+        Dish dish = dishMapper.getById(id);
+        //根据ID查询flavor
+        List<DishFlavor> dishFlavors = dishFlavorsMapper.getByDishId(id);
+        DishVO dishVO = new DishVO();
+        BeanUtils.copyProperties(dish, dishVO);
+        dishVO.setFlavors(dishFlavors);
+        return dishVO;
+    }
+
+    /**
+     * update dishes With Flavor
+     *
+     * @param dishDTO
+     */
+    @Override
+    public void updateWithFlavor(DishDTO dishDTO) {
+        //update dish_table
+        Dish dish = new Dish();
+        BeanUtils.copyProperties(dishDTO, dish);
+        dishMapper.update(dish);
+
+        //delete dish_flavor_table
+        dishFlavorsMapper.deleteByDishId(dishDTO.getId());
+
+        //insert dish_flavor_table
+        List<DishFlavor> flavors = dishDTO.getFlavors();
+        if (flavors != null && flavors.size() > 0) {
+            flavors.forEach(dishFlavor -> {
+                dishFlavor.setDishId(dishDTO.getId());
+            });
+            //向flavor_table插入n条数据
+            dishFlavorsMapper.insertBatch(flavors);
+        }
+
+    }
+    /**
+     * change status by id
+     * @param status
+     * @param id
+     */
+    @Override
+    public void statusChange(Integer status, Long id) {
+        Dish dish = Dish.builder()
+                .status(status)
+                .id(id)
+                .build();
+
+        dishMapper.update(dish);
     }
 }
