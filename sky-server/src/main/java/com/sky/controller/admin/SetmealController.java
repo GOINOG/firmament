@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * setmeal management
  */
@@ -44,4 +46,30 @@ public class SetmealController {
         PageResult pageResult = setmealService.pageQuery(setmealPageQueryDTO);
         return Result.success(pageResult);
     }
+
+    /**
+     * status change
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public Result statusChange(@PathVariable Integer status, Long id){
+        log.info("setmeal change status: {}, id: {}", status,id);
+        setmealService.statusChange(status,id);
+        return Result.success();
+    }
+
+    /**
+     * batch delete by ids
+     * @param ids
+     * @return
+     */
+    @DeleteMapping
+    public Result batchDeletion(@RequestParam List<Long> ids){
+        log.info("batch delete : {}",ids);
+        setmealService.batchDelete(ids);
+        return Result.success();
+    }
+
 }

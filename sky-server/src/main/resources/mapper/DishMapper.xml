@@ -40,5 +40,13 @@
         order by d.create_time desc
     </select>
 
+    <select id="getByCategoryId" resultType="com.sky.entity.Dish">
+        select * from dish
+        where status = 1
+        <if test="categoryId != null">
+            and category_id = #{cateforyId}
+        </if>
+    </select>
+
 
 </mapper>
