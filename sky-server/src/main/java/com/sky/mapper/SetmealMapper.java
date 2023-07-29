@@ -7,7 +7,6 @@ import com.sky.entity.Setmeal;
 import com.sky.enumeration.OperationType;
 import com.sky.vo.SetmealVO;
 import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -25,9 +24,6 @@ public interface SetmealMapper {
      * insert into setmeal table
      * @param setmeal
      */
-    @Insert("insert into setmeal (category_id, name, price, description, image, create_time, update_time, create_user, update_user, status) " +
-            "VALUES" +
-            "(#{categoryId},#{name},#{price},#{description},#{image},#{createTime},#{updateTime},#{createUser},#{updateUser},#{status}) ")
     @AutoFill(value = OperationType.INSERT)
     void insert(Setmeal setmeal);
 
@@ -52,4 +48,11 @@ public interface SetmealMapper {
      */
     @Delete("delete from setmeal where id = #{id}")
     void deleteById(Long id);
+
+    /**
+     * update
+     * @param setmeal
+     */
+    @AutoFill(value = OperationType.UPDATE)
+    void update(Setmeal setmeal);
 }
