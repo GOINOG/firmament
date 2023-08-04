@@ -3,15 +3,19 @@ package com.sky.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.sky.constant.MessageConstant;
+import com.sky.dto.MyUserLoginDTO;
 import com.sky.dto.UserLoginDTO;
 import com.sky.entity.User;
+import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.LoginFailedException;
+import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.UserMapper;
 import com.sky.properties.WeChatProperties;
 import com.sky.service.UserService;
 import com.sky.utils.HttpClientUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -48,6 +52,43 @@ public class UserServiceImpl implements UserService {
         }
 
         //返回用户对象
+        return user;
+    }
+
+    /**
+     * signup
+     * @param user
+     */
+    @Override
+    public void signup(User user) {
+        String password = DigestUtils.md5DigestAsHex(user.getPassword().getBytes());
+        user.setPassword(password);
+        user.setCreateTime(LocalDateTime.now());
+        userMapper.insert(user);
+    }
+
+    /**
+     * my login
+     * @param userLoginDTO
+     * @return
+     */
+    @Override
+    public User login(MyUserLoginDTO userLoginDTO) {
+        String openid = userLoginDTO.getUsername();
+        String password = userLoginDTO.getPassword();
+
+        //根据用户名查询数据库中的user数据
+        User user = userMapper.getByOpenid(openid);
+        if (user == null) {
+            //账号不存在
+            throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
+        }
+        //md5加密
+        password = DigestUtils.md5DigestAsHex(password.getBytes());
+        if (!password.equals(user.getPassword())){
+            //密码错误
+            throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
+        }
         return user;
     }
 

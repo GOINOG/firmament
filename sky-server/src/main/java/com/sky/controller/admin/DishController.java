@@ -1,5 +1,6 @@
 package com.sky.controller.admin;
 
+import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
@@ -98,6 +99,10 @@ public class DishController {
     @GetMapping("/list")
     public Result<List<Dish>> list(Long categoryId){
         log.info("get dishes by category id: {}", categoryId);
+        Dish dish = Dish.builder()
+                .categoryId(categoryId)
+                .status(StatusConstant.ENABLE)
+                .build();
         List<Dish> dishes = dishService.getByCategoryId(categoryId);
         return Result.success(dishes);
     }

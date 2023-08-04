@@ -65,4 +65,13 @@ public interface DishMapper {
      * @return
      */
     List<Dish> getByCategoryId(Long categoryId);
+
+    /**
+     * get by dish
+     * @param dish
+     * @return
+     */
+    List<Dish> list(Dish dish);
+
+
 }

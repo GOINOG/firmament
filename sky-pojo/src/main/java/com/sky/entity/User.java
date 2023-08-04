@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -21,6 +20,9 @@ public class User implements Serializable {
 
     //微信用户唯一标识
     private String openid;
+
+    //密码(新增)
+    private String password;
 
     //姓名
     private String name;
