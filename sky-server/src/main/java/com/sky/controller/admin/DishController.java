@@ -10,9 +10,11 @@ import com.sky.service.DishService;
 import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/admin/dish")
@@ -20,6 +22,8 @@ import java.util.List;
 public class DishController {
     @Autowired
     private DishService dishService;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      *insert dish
@@ -30,6 +34,11 @@ public class DishController {
     public Result save(@RequestBody DishDTO dishDTO){
         log.info("新增dish: {}", dishDTO);
         dishService.saveWithFlavor(dishDTO);
+
+        //Clear cached data by dishDTO
+        String key = "dish_" + dishDTO.getCategoryId();
+        cleanCache(key);
+
         return Result.success();
     }
 
@@ -53,6 +62,10 @@ public class DishController {
     public Result delete(@RequestParam List<Long> ids){
         log.info("dish batch delete: {} ",ids);
         dishService.deleteBatch(ids);
+
+        //Clear all cached data, cuz it will affect more than one category
+        cleanCache("dish_*");
+
         return Result.success();
     }
 
@@ -75,6 +88,10 @@ public class DishController {
     public Result update(@RequestBody DishDTO dishDTO){
         log.info("update dishDTO: {}", dishDTO);
         dishService.updateWithFlavor(dishDTO);
+
+        //Clear all cached data, cuz this method will affect more than one category
+        cleanCache("dish_*");
+
         return Result.success();
     }
 
@@ -88,6 +105,10 @@ public class DishController {
     public Result statusChange(@PathVariable Integer status, Long id){
         log.info("status changing call, id: {}, status: {}", id, status);
         dishService.statusChange(status, id);
+
+        //Clear all cached data, cuz this method will affect more than one category
+        cleanCache("dish_*");
+
         return Result.success();
     }
 
@@ -105,6 +126,15 @@ public class DishController {
                 .build();
         List<Dish> dishes = dishService.getByCategoryId(categoryId);
         return Result.success(dishes);
+    }
+
+    /**
+     * clean all cache
+     * @param pattern
+     */
+    private void cleanCache(String pattern){
+        Set keys = redisTemplate.keys(pattern);
+        redisTemplate.delete(keys);
     }
 
 }
