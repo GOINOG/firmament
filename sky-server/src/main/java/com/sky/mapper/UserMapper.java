@@ -1,9 +1,7 @@
 package com.sky.mapper;
 
 
-import com.sky.annotation.AutoFill;
 import com.sky.entity.User;
-import com.sky.enumeration.OperationType;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -16,6 +14,14 @@ public interface UserMapper {
      */
     @Select("select * from user where openid = #{openid}")
     User getByOpenid(String openid);
+
+    /**
+     * get by id
+     * @param id
+     * @return
+     */
+    @Select("select * from user where id = #{id}")
+    User getById(Long id);
 
     /**
      * insert user
