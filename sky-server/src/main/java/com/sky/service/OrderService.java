@@ -48,7 +48,7 @@ public interface OrderService {
      * cancel order
      * @param id
      */
-    void cancel(Long id);
+    void cancel(Long id) throws Exception;
 
     /**
      * order again

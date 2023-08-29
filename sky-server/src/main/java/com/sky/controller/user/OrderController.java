@@ -78,7 +78,7 @@ public class OrderController {
      * @return
      */
     @PutMapping("/cancel/{id}")
-    public Result cancel(@PathVariable Long id){
+    public Result cancel(@PathVariable Long id) throws Exception {
         log.info("cancel order, order id = {}", id);
         orderService.cancel(id);
         return Result.success();

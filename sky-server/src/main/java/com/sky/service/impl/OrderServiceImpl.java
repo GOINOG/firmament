@@ -213,9 +213,37 @@ public class OrderServiceImpl implements OrderService {
      * @param id
      */
     @Override
-    //TODO business logic needs to be modified
-    public void cancel(Long id) {
-        orderMapper.changeStatus(id);
+    public void cancel(Long id) throws Exception{
+        //get order
+        Orders order = orderMapper.getById(id);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        //check status
+        Integer status = order.getStatus();
+        //if status > 2, cannot cancel order by user
+        if (status > 2){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        //if status == 2, need to refund
+        if (status.equals(Orders.TO_BE_CONFIRMED)){
+            weChatPayUtil.refund(
+                    order.getNumber(),
+                    order.getNumber(),
+                    new BigDecimal("0.01"),
+                    new BigDecimal("0.01")
+            );
+
+            order.setPayStatus(Orders.REFUND);
+        }
+
+        //update order
+        order.setStatus(Orders.CANCELLED);
+        order.setCancelReason("user cancel");
+        order.setCancelTime(LocalDateTime.now());
+        orderMapper.update(order);
     }
 
     /**
