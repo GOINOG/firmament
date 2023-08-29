@@ -8,6 +8,7 @@ import com.sky.context.BaseContext;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.ShoppingCartDTO;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -43,6 +44,8 @@ public class OrderServiceImpl implements OrderService {
     private UserMapper userMapper;
     @Autowired
     private WeChatPayUtil weChatPayUtil;
+    @Autowired
+    private ShoppingCartServiceImpl shoppingCartService;
 
     /**
      * user place order
@@ -203,5 +206,39 @@ public class OrderServiceImpl implements OrderService {
         List<OrderDetail> orderDetail = orderDetailMapper.getByOrderId(orderId);
         orderVO.setOrderDetailList(orderDetail);
         return orderVO;
+    }
+
+    /**
+     * cancel order
+     * @param id
+     */
+    @Override
+    //TODO business logic needs to be modified
+    public void cancel(Long id) {
+        orderMapper.changeStatus(id);
+    }
+
+    /**
+     * order again
+     * @param id
+     */
+    @Override
+    public void repetition(Long id) {
+        //get order details
+        List<OrderDetail> list = orderDetailMapper.getByOrderId(id);
+
+        //convert to shopping_cart object
+        for (OrderDetail each: list
+             ) {
+            ShoppingCartDTO shoppingCartDTO = new ShoppingCartDTO();
+            if (each.getDishId() != null) {
+                 shoppingCartDTO.setDishId(each.getDishId());
+            }else {
+                shoppingCartDTO.setSetmealId(each.getSetmealId());
+            }
+            shoppingCartDTO.setDishFlavor(each.getDishFlavor());
+            //insert into shopping_cart
+            shoppingCartService.add(shoppingCartDTO);
+        }
     }
 }

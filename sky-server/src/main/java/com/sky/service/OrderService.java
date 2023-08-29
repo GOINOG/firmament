@@ -43,4 +43,16 @@ public interface OrderService {
      * @return
      */
     OrderVO orderDetails(Long id);
+
+    /**
+     * cancel order
+     * @param id
+     */
+    void cancel(Long id);
+
+    /**
+     * order again
+     * @param id
+     */
+    void repetition(Long id);
 }
