@@ -5,10 +5,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
-import com.sky.dto.ShoppingCartDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -18,6 +15,7 @@ import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import org.springframework.beans.BeanUtils;
@@ -25,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,20 +48,22 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * user place order
+     *
      * @param submitDTO
      * @return
      */
     @Override
+    //TODO Verify that the delivery range cannot exceed 5miles
     public OrderSubmitVO submitOrder(OrdersSubmitDTO submitDTO) {
         //check addressBook
         AddressBook addressBook = addressBookMapper.getById(submitDTO.getAddressBookId());
-        if (addressBook == null){
+        if (addressBook == null) {
             throw new AddressBookBusinessException(MessageConstant.ADDRESS_BOOK_IS_NULL);
         }
 
         //check shopping cart
         List<ShoppingCart> shoppingCarts = shoppingCartMapper.getByUserId(BaseContext.getCurrentId());
-        if (shoppingCarts == null || shoppingCarts.size() == 0){
+        if (shoppingCarts == null || shoppingCarts.size() == 0) {
             throw new ShoppingCartBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
         }
 
@@ -81,7 +82,7 @@ public class OrderServiceImpl implements OrderService {
 
         //insert into order_detail_table
         List<OrderDetail> orderDetailList = new ArrayList<>();
-        for (ShoppingCart cart : shoppingCarts){
+        for (ShoppingCart cart : shoppingCarts) {
             OrderDetail orderDetail = new OrderDetail();//订单明细
             BeanUtils.copyProperties(cart, orderDetail);
             orderDetail.setOrderId(orders.getId());//设置关联order id
@@ -156,6 +157,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * get history orders for the user
+     *
      * @param pageNum
      * @param pageSize
      * @param status
@@ -175,8 +177,8 @@ public class OrderServiceImpl implements OrderService {
         List<OrderVO> list = new ArrayList<>();
 
         //query order details
-        if (page != null && page.getTotal() > 0){
-            for (Orders order: page) {
+        if (page != null && page.getTotal() > 0) {
+            for (Orders order : page) {
                 List<OrderDetail> orderDetail = orderDetailMapper.getByOrderId(order.getId());
 
                 OrderVO orderVO = new OrderVO();
@@ -191,6 +193,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * get order details by id
+     *
      * @param orderId
      * @return
      */
@@ -200,7 +203,7 @@ public class OrderServiceImpl implements OrderService {
 
         //set order properties
         Orders orders = orderMapper.getById(orderId);
-        BeanUtils.copyProperties(orders,orderVO);
+        BeanUtils.copyProperties(orders, orderVO);
 
         //get details and set detailsList
         List<OrderDetail> orderDetail = orderDetailMapper.getByOrderId(orderId);
@@ -210,10 +213,11 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * cancel order
+     *
      * @param id
      */
     @Override
-    public void cancel(Long id) throws Exception{
+    public void cancel(Long id) throws Exception {
         //get order
         Orders order = orderMapper.getById(id);
         if (order == null) {
@@ -223,12 +227,12 @@ public class OrderServiceImpl implements OrderService {
         //check status
         Integer status = order.getStatus();
         //if status > 2, cannot cancel order by user
-        if (status > 2){
+        if (status > 2) {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
 
         //if status == 2, need to refund
-        if (status.equals(Orders.TO_BE_CONFIRMED)){
+        if (status.equals(Orders.TO_BE_CONFIRMED)) {
             weChatPayUtil.refund(
                     order.getNumber(),
                     order.getNumber(),
@@ -248,6 +252,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * order again
+     *
      * @param id
      */
     @Override
@@ -256,17 +261,68 @@ public class OrderServiceImpl implements OrderService {
         List<OrderDetail> list = orderDetailMapper.getByOrderId(id);
 
         //convert to shopping_cart object
-        for (OrderDetail each: list
-             ) {
+        for (OrderDetail each : list
+        ) {
             ShoppingCartDTO shoppingCartDTO = new ShoppingCartDTO();
             if (each.getDishId() != null) {
-                 shoppingCartDTO.setDishId(each.getDishId());
-            }else {
+                shoppingCartDTO.setDishId(each.getDishId());
+            } else {
                 shoppingCartDTO.setSetmealId(each.getSetmealId());
             }
             shoppingCartDTO.setDishFlavor(each.getDishFlavor());
             //insert into shopping_cart
             shoppingCartService.add(shoppingCartDTO);
         }
+    }
+
+    @Override
+    //TODO: Learn how PageHelper works
+    public PageResult pageQuery4Admin(OrdersPageQueryDTO opqDTO) {
+        PageHelper.startPage(opqDTO.getPage(), opqDTO.getPageSize());
+        Page<Orders> page = orderMapper.pageQuery(opqDTO);
+
+        //need to get orderDishes
+        List<OrderVO> list = new ArrayList<>();
+        if (page != null && page.getTotal() > 0) {
+            //get each order in page, and build orderDishes
+            for (Orders order : page) {
+                OrderVO orderVO = new OrderVO();
+                String orderDishes = "";
+                BeanUtils.copyProperties(order, orderVO);
+
+                // get dish or setmeal name by order_id in order_detail_table
+                List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(order.getId());
+                for (OrderDetail detail: orderDetails){
+                    orderDishes = MessageFormat.format("{0}{1}*{2}, ", orderDishes, detail.getName(), detail.getNumber());
+                }
+
+                orderVO.setOrderDishes(orderDishes.substring(0, orderDishes.length() - 2));
+                list.add(orderVO);
+            }
+        }
+
+        return new PageResult(page.getTotal(), list);
+    }
+
+    /**
+     * Order quantity statistics for each status
+     * @return
+     */
+    @Override
+    public OrderStatisticsVO statistics() {
+        OrderStatisticsVO statisticsVO = new OrderStatisticsVO();
+        statisticsVO.setConfirmed(orderMapper.getAmountByStatus(Orders.CONFIRMED));
+        statisticsVO.setToBeConfirmed(orderMapper.getAmountByStatus(Orders.TO_BE_CONFIRMED));
+        statisticsVO.setDeliveryInProgress(orderMapper.getAmountByStatus(Orders.DELIVERY_IN_PROGRESS));
+        return statisticsVO;
+    }
+
+    /**
+     * confirm order
+     * @param ocDTO
+     */
+    @Override
+    public void confirm(OrdersConfirmDTO ocDTO) {
+        orderMapper.statusChange(ocDTO.getId(), Orders.CONFIRMED);
     }
 }

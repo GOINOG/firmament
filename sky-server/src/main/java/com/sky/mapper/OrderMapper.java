@@ -5,6 +5,7 @@ import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface OrderMapper {
@@ -42,4 +43,19 @@ public interface OrderMapper {
     @Select("select * from orders where id = #{orderId}")
     Orders getById(Long orderId);
 
+    /**
+     * get amount by status
+     * @param status
+     * @return
+     */
+    @Select("select count(*) from orders where status = #{status}")
+    Integer getAmountByStatus(Integer status);
+
+    /**
+     * status change
+     * @param id
+     * @param status
+     */
+    @Update("update orders set status = #{status} where id = #{id}")
+    void statusChange(Long id, Integer status);
 }
