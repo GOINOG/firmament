@@ -1,7 +1,9 @@
 package com.sky.controller.admin;
 
+import com.sky.dto.OrdersCancelDTO;
 import com.sky.dto.OrdersConfirmDTO;
 import com.sky.dto.OrdersPageQueryDTO;
+import com.sky.dto.OrdersRejectionDTO;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.OrderService;
@@ -60,8 +62,56 @@ public class OrderController {
      */
     @PutMapping("/confirm")
     public Result confirm(@RequestBody OrdersConfirmDTO ocDTO){
-        log.info("comfirm the order:{}", ocDTO.getId());
+        log.info("confirm the order:{}", ocDTO.getId());
         orderService.confirm(ocDTO);
+        return Result.success();
+    }
+
+    /**
+     * reject order
+     * @param orDTO
+     * @return
+     */
+    @PutMapping("/rejection")
+    public Result rejection(@RequestBody OrdersRejectionDTO orDTO) throws Exception{
+        log.info("reject the order:{}", orDTO.getId());
+        orderService.reject(orDTO);
+        return Result.success();
+    }
+
+    /**
+     * 取消订单
+     *
+     * @return
+     */
+    @PutMapping("/cancel")
+    public Result cancel(@RequestBody OrdersCancelDTO ordersCancelDTO) throws Exception {
+        log.info("admin cancel the order:{}", ordersCancelDTO.getId());
+        orderService.adminCancel(ordersCancelDTO);
+        return Result.success();
+    }
+
+    /**
+     * delivery order
+     * @param id
+     * @return
+     */
+    @PutMapping("/delivery/{id}")
+    public Result delivery(@PathVariable Long id) throws Exception {
+        log.info("admin delivery the order:{}", id);
+        orderService.delivery(id);
+        return Result.success();
+
+    }
+
+    /**
+     * complete order
+     *
+     * @return
+     */
+    @PutMapping("/complete/{id}")
+    public Result complete(@PathVariable Long id) {
+        orderService.complete(id);
         return Result.success();
     }
 }

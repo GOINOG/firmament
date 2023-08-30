@@ -18,6 +18,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
@@ -324,5 +326,119 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void confirm(OrdersConfirmDTO ocDTO) {
         orderMapper.statusChange(ocDTO.getId(), Orders.CONFIRMED);
+    }
+
+    /**
+     * reject order
+     * @param orDTO
+     */
+    @Override
+    public void reject(OrdersRejectionDTO orDTO) throws Exception{
+        Orders order = orderMapper.getById(orDTO.getId());
+
+        if (order == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        //can only reject when status = 2
+        if (order.getStatus() != 2){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        //check payStatus and refund
+        if (order.getPayStatus().equals(Orders.PAID)){
+            /*weChatPayUtil.refund(
+                    order.getNumber(),
+                    order.getNumber(),
+                    new BigDecimal("0.01"),
+                    new BigDecimal("0.01")
+            );*/
+            order.setPayStatus(Orders.REFUND);
+        }
+
+        //update order
+        order.setRejectionReason(orDTO.getRejectionReason());
+        order.setCancelReason(orDTO.getRejectionReason());
+        order.setCancelTime(LocalDateTime.now());
+        order.setStatus(Orders.CANCELLED);
+        orderMapper.update(order);
+    }
+
+    /**
+     * admin cancel order
+     * @param ordersCancelDTO
+     * @throws Exception
+     */
+    @Override
+    public void adminCancel(OrdersCancelDTO ordersCancelDTO) throws Exception {
+        Orders order = orderMapper.getById(ordersCancelDTO.getId());
+
+        if (order == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        //支付状态
+        Integer payStatus = order.getPayStatus();
+        if (payStatus == 1) {
+           /* //用户已支付，需要退款
+            String refund = weChatPayUtil.refund(
+                    order.getNumber(),
+                    order.getNumber(),
+                    new BigDecimal("0.01"),
+                    new BigDecimal("0.01"));
+            log.info("申请退款：{}", refund);*/
+            order.setPayStatus(Orders.REFUND);
+        }
+
+        // 管理端取消订单需要退款，根据订单id更新订单状态、取消原因、取消时间
+
+        order.setStatus(Orders.CANCELLED);
+        order.setCancelReason(ordersCancelDTO.getCancelReason());
+        order.setCancelTime(LocalDateTime.now());
+        orderMapper.update(order);
+    }
+
+    /**
+     * delivery order
+     * @param id
+     */
+    @Override
+    public void delivery(Long id) throws Exception{
+        Orders order = orderMapper.getById(id);
+
+        if (order == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        //only delivery when status == 3
+        if (!order.getStatus().equals(Orders.CONFIRMED)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        order.setEstimatedDeliveryTime(LocalDateTime.now().plusMinutes(30));
+        order.setStatus(Orders.DELIVERY_IN_PROGRESS);
+        orderMapper.update(order);
+    }
+
+    /**
+     * complete order
+     * @param id
+     */
+    @Override
+    public void complete(Long id) {
+        Orders order = orderMapper.getById(id);
+
+        if (order == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        //only complete when status == 4
+        if (!order.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        order.setDeliveryTime(LocalDateTime.now());
+        order.setStatus(Orders.COMPLETED);
+        orderMapper.update(order);
     }
 }
