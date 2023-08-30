@@ -7,6 +7,9 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Mapper
 public interface OrderMapper {
     /**
@@ -58,4 +61,12 @@ public interface OrderMapper {
      */
     @Update("update orders set status = #{status} where id = #{id}")
     void statusChange(Long id, Integer status);
+
+    /**
+     * get timeout orders
+     * @return
+     * @param ddl
+     */
+    @Select("select * from orders where status = #{status} and order_time <= #{ddl};" )
+    List<Orders> getByStatusAndOrderTime(Integer status, LocalDateTime ddl);
 }
