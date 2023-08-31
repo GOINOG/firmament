@@ -99,4 +99,10 @@ public interface OrderService {
      * @param id
      */
     void complete(Long id);
+
+    /**
+     * client reminder
+     * @param id
+     */
+    void reminder(Long id);
 }
