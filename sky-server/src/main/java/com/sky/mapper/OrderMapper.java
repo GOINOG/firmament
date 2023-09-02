@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -78,4 +79,22 @@ public interface OrderMapper {
      * @return
      */
     Double getSumByOrderTimeAndStatus(LocalDateTime start, LocalDateTime ending, Integer status);
+
+    /**
+     * get order count by order time and status
+     * @param start
+     * @param ending
+     * @param status
+     * @return
+     */
+    Integer getCountByOrderTimeAndStatus(LocalDateTime start, LocalDateTime ending, Integer status);
+
+    /**
+     * get valid order's id between certain time
+     * @param start
+     * @param ending
+     * @return
+     */
+    @Select("select id from orders where order_time between #{start} and #{ending} and status = 5")
+    List<BigInteger> getValidIdByCreateTime(LocalDateTime start, LocalDateTime ending);
 }

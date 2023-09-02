@@ -5,6 +5,8 @@ import com.sky.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
+
 @Mapper
 public interface UserMapper {
     /**
@@ -29,4 +31,11 @@ public interface UserMapper {
      */
     void insert(User user);
 
+    /**
+     * get user number by create time
+     * @param start
+     * @param ending
+     * @return
+     */
+    Integer getByCreateTime(LocalDateTime start, LocalDateTime ending);
 }

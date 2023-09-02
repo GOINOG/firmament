@@ -9,4 +9,15 @@
             (#{od.name}, #{od.image}, #{od.orderId}, #{od.dishId}, #{od.setmealId}, #{od.dishFlavor}, #{od.number}, #{od.amount})
         </foreach>
     </insert>
+
+    <select id="getSumByNameGroupAndIds" resultType="com.sky.dto.GoodsSalesDTO">
+        select name, sum(number) as number from order_detail
+        where order_id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        group by name
+        order by number desc
+        limit 10
+    </select>
 </mapper>

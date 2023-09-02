@@ -80,4 +80,19 @@
         </where>
     </select>
 
+    <select id="getCountByOrderTimeAndStatus" resultType="java.lang.Integer">
+        select count(*) from orders
+        <where>
+        <if test="start != null">
+            and order_time &gt; #{start}
+        </if>
+        <if test="ending != null">
+            and order_time &lt; #{ending}
+        </if>
+        <if test="status != null">
+            and status = #{status}
+        </if>
+        </where>
+    </select>
+
 </mapper>

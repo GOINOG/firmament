@@ -7,4 +7,16 @@
         insert into user (openid, name,password, phone, sex, id_number, avatar, create_time)
         VALUES (#{openid}, #{name}, #{password}, #{phone}, #{sex}, #{idNumber}, #{avatar}, #{createTime})
     </insert>
+
+    <select id="getByCreateTime" resultType="java.lang.Integer">
+        select COUNT(*) from user
+        <where>
+            <if test="start != null">
+                and create_time &gt; #{start}
+            </if>
+            <if test="ending != null">
+                and create_time &lt; #{ending}
+            </if>
+        </where>
+    </select>
 </mapper>
