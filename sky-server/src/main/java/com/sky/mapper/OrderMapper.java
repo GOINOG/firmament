@@ -69,4 +69,13 @@ public interface OrderMapper {
      */
     @Select("select * from orders where status = #{status} and order_time <= #{ddl};" )
     List<Orders> getByStatusAndOrderTime(Integer status, LocalDateTime ddl);
+
+    /**
+     * get sum by order time and status
+     * @param start
+     * @param ending
+     * @param status
+     * @return
+     */
+    Double getSumByOrderTimeAndStatus(LocalDateTime start, LocalDateTime ending, Integer status);
 }
