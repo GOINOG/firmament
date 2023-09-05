@@ -1,6 +1,7 @@
 package com.sky.service.impl;
 
 import com.sky.dto.GoodsSalesDTO;
+import com.sky.entity.Orders;
 import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
@@ -57,7 +58,7 @@ public class ReportServiceImpl implements ReportService {
             LocalDateTime start = LocalDateTime.of(date, LocalTime.MIN);
             LocalDateTime ending = LocalDateTime.of(date, LocalTime.MAX);
 
-            Double turnover = orderMapper.getSumByOrderTimeAndStatus(start, ending, 5);
+            Double turnover = orderMapper.getSumByOrderTimeAndStatus(start, ending, Orders.COMPLETED);
             turnoverList.add(turnover == null ? 0.0 : turnover);
         }
 
@@ -140,12 +141,12 @@ public class ReportServiceImpl implements ReportService {
             LocalDateTime start = LocalDateTime.of(date, LocalTime.MIN);
             LocalDateTime ending = LocalDateTime.of(date, LocalTime.MAX);
 
-            //get order count list each day
+            //get order count list for each day
             Integer orderCount = orderMapper.getCountByOrderTimeAndStatus(start, ending, null);
             orderCountList.add(orderCount == null ? 0 : orderCount);
 
             //get valid order count list each day
-            Integer validOrderCount = orderMapper.getCountByOrderTimeAndStatus(start, ending, 5);
+            Integer validOrderCount = orderMapper.getCountByOrderTimeAndStatus(start, ending, Orders.COMPLETED);
             validOrderCountList.add(validOrderCount == null ? 0 : validOrderCount);
 
         }
@@ -159,7 +160,7 @@ public class ReportServiceImpl implements ReportService {
         totalOrderCount = totalOrderCount == null? 0: totalOrderCount;
 
         //get total order count
-        Integer validTotalOrderCount = orderMapper.getCountByOrderTimeAndStatus(null, LocalDateTime.now(),5);
+        Integer validTotalOrderCount = orderMapper.getCountByOrderTimeAndStatus(null, LocalDateTime.now(),Orders.COMPLETED);
         validTotalOrderCount = validTotalOrderCount == null? 0: validTotalOrderCount;
 
         //get order Completion Rate
