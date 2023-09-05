@@ -6,15 +6,20 @@ import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
-import com.sky.vo.OrderReportVO;
-import com.sky.vo.SalesTop10ReportVO;
-import com.sky.vo.TurnoverReportVO;
-import com.sky.vo.UserReportVO;
+import com.sky.service.WorkspaceService;
+import com.sky.vo.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,6 +37,8 @@ public class ReportServiceImpl implements ReportService {
     private UserMapper userMapper;
     @Autowired
     private OrderDetailMapper orderDetailMapper;
+    @Autowired
+    private WorkspaceService workspaceService;
 
     /**
      * get turnover statistics
@@ -118,6 +125,7 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * get order statistics
+     *
      * @param begin
      * @param end
      * @return
@@ -156,16 +164,16 @@ public class ReportServiceImpl implements ReportService {
 
 
         //get total order count
-        Integer totalOrderCount = orderMapper.getCountByOrderTimeAndStatus(null, LocalDateTime.now(),null);
-        totalOrderCount = totalOrderCount == null? 0: totalOrderCount;
+        Integer totalOrderCount = orderMapper.getCountByOrderTimeAndStatus(null, LocalDateTime.now(), null);
+        totalOrderCount = totalOrderCount == null ? 0 : totalOrderCount;
 
         //get total order count
-        Integer validTotalOrderCount = orderMapper.getCountByOrderTimeAndStatus(null, LocalDateTime.now(),Orders.COMPLETED);
-        validTotalOrderCount = validTotalOrderCount == null? 0: validTotalOrderCount;
+        Integer validTotalOrderCount = orderMapper.getCountByOrderTimeAndStatus(null, LocalDateTime.now(), Orders.COMPLETED);
+        validTotalOrderCount = validTotalOrderCount == null ? 0 : validTotalOrderCount;
 
         //get order Completion Rate
         double orderCompletionRate = -1;
-        if (totalOrderCount != 0){
+        if (totalOrderCount != 0) {
             orderCompletionRate = (double) validTotalOrderCount / totalOrderCount;
         }
 
@@ -181,6 +189,7 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * get top10 goods
+     *
      * @param begin
      * @param end
      * @return
@@ -198,17 +207,80 @@ public class ReportServiceImpl implements ReportService {
         StringBuilder nameList = new StringBuilder();
         StringBuilder numberList = new StringBuilder();
         List<GoodsSalesDTO> top10List = orderDetailMapper.getSumByNameGroupAndIds(ids);
-        for (GoodsSalesDTO each: top10List) {
+        for (GoodsSalesDTO each : top10List) {
             nameList.append(each.getName()).append(",");
             numberList.append(each.getNumber()).append(",");
         }
 
-        String nameString = nameList.substring(0, nameList.length()-1);
-        String numberString = numberList.substring(0, numberList.length()-1);
+        String nameString = nameList.substring(0, nameList.length() - 1);
+        String numberString = numberList.substring(0, numberList.length() - 1);
 
         return SalesTop10ReportVO.builder()
                 .nameList(nameString)
                 .numberList(numberString)
                 .build();
+    }
+
+    /**
+     * export business data
+     */
+    @Override
+    public void exportBusinessData(HttpServletResponse response) {
+        //1.query database to obtain business data
+        LocalDate begin = LocalDate.now().minusDays(30);
+        LocalDate end = LocalDate.now().minusDays(1);
+        BusinessDataVO businessData = workspaceService.getBusinessData(LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX));
+
+        //2.export data to an EXCEL file by POI
+
+        //get inputStream from template/{file name}
+        InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/Business_Data_Report_Template.xlsx");
+
+        try {
+            //create an excel file based on template file
+            XSSFWorkbook excel = new XSSFWorkbook(is);
+
+            //get sheet
+            XSSFSheet sheet = excel.getSheet("Sheet1");
+
+            //fill date and time at row#2
+            sheet.getRow(1).getCell(1).setCellValue("from " + begin + " to " + end);
+
+            //fill overview business data
+            XSSFRow row = sheet.getRow(3);
+            row.getCell(2).setCellValue(businessData.getTurnover());
+            row.getCell(4).setCellValue(businessData.getOrderCompletionRate());
+            row.getCell(6).setCellValue(businessData.getNewUsers());
+            row = sheet.getRow(4);
+            row.getCell(2).setCellValue(businessData.getValidOrderCount());
+            row.getCell(4).setCellValue(businessData.getUnitPrice());
+
+            //fill detailed business data from row#7 to row#37
+            for (int i = 0; i < 30; i++) {
+                LocalDate day = begin.plusDays(i);
+
+                LocalDateTime start = LocalDateTime.of(day, LocalTime.MIN);
+                LocalDateTime ending = LocalDateTime.of(day, LocalTime.MAX);
+                BusinessDataVO eachDay = workspaceService.getBusinessData(start, ending);
+
+                row = sheet.getRow(i + 7);
+                row.getCell(1).setCellValue(String.valueOf(day));
+                row.getCell(2).setCellValue(eachDay.getTurnover());
+                row.getCell(3).setCellValue(eachDay.getValidOrderCount());
+                row.getCell(4).setCellValue(eachDay.getOrderCompletionRate());
+                row.getCell(5).setCellValue(eachDay.getUnitPrice());
+                row.getCell(6).setCellValue(eachDay.getNewUsers());
+            }
+
+            //3. download EXCEL to client's browser through outputStream object
+            ServletOutputStream outputStream = response.getOutputStream();
+            excel.write(outputStream);
+
+            //4.close resource
+            outputStream.close();
+            excel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

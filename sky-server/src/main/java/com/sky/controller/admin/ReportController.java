@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 
 @RestController
@@ -84,6 +85,17 @@ public class ReportController {
         log.info("top10 dish or setmeal statistics from {} to {}", begin, end);
         SalesTop10ReportVO top10 = reportService.getGoodsReport(begin, end);
         return Result.success(top10);
+    }
+
+    /**
+     * export Business data to EXCEL
+     * @return
+     */
+    @GetMapping("/export")
+    public Result export(HttpServletResponse response){
+        log.info("export data to excel.");
+        reportService.exportBusinessData(response);
+        return Result.success();
     }
 
 }
