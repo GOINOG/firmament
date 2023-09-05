@@ -26,6 +26,7 @@ import java.util.List;
  */
 @Configuration
 @Slf4j
+//TODO webMVC 知识点
 public class WebMvcConfiguration extends WebMvcConfigurationSupport {
 
     @Autowired

@@ -9,6 +9,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 @Slf4j
+//TODO configuration配置类原理及redis知识点
 public class RedisConfiguration {
 
     @Bean

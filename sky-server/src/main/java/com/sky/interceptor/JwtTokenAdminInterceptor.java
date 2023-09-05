@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Component
 @Slf4j
+//TODO interceptor知识点
 public class JwtTokenAdminInterceptor implements HandlerInterceptor {
 
     @Autowired

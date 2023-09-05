@@ -12,6 +12,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)//只能加在方法上
 @Retention(RetentionPolicy.RUNTIME)
+//TODO customize annotation 知识点
 public @interface AutoFill {
     //数据库操作类型： UPDATA, INSERT
     OperationType value();

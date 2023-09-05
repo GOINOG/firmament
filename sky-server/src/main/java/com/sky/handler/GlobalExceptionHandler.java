@@ -14,6 +14,7 @@ import java.sql.SQLIntegrityConstraintViolationException;
  */
 @RestControllerAdvice
 @Slf4j
+//TODO 全局异常处理器知识点
 public class GlobalExceptionHandler {
 
     /**

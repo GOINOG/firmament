@@ -16,7 +16,7 @@ import java.util.Map;
  */
 @Component
 @ServerEndpoint("/ws/{sid}")
-//TODO try to understand this
+//TODO websocket知识点
 public class WebSocketServer {
 
     //store session object

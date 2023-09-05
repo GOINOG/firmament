@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.*;
 import java.util.List;
 
 @Mapper
+//TODO @mapper知识点
 public interface AddressBookMapper {
 
     /**

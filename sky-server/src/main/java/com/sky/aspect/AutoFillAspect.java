@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 @Aspect
 @Component
 @Slf4j
+//TODO springboot AOP原理
 public class AutoFillAspect {
     /**
      * 切入点
