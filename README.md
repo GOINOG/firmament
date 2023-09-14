@@ -1,2 +1,2 @@
 # firmament
-learn proj
+learning proj
